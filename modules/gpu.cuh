@@ -24,7 +24,8 @@ __device__ void kernel_DoDrugSim_single(double *d_ic50, double *d_cvar, double d
                                        double *ical, double *ito,
                                        double *ikr, double *iks, 
                                        double *ik1, double *tension,
-                                       double *tcurr, double *dt, unsigned short sample_id, unsigned int sample_size,
+                                       double *tcurr, double *dt, double *dt_mech, double *tcurr_mech, 
+                                       unsigned short sample_id, unsigned int sample_size,
                                        cipa_t *temp_result, cipa_t *cipa_result,
                                        param_t *p_param
                                        );

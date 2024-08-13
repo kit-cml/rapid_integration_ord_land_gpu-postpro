@@ -21,7 +21,7 @@ __device__ void kernel_DoDrugSim_single(double *d_ic50, double *d_cvar, double d
                                         double *d_mec_CONSTANTS, double *d_mec_STATES, double *d_mec_RATES,
                                         double *d_mec_ALGEBRAIC, double *time, double *states, double *out_dt,
                                         double *cai_result, double *ina, double *inal, double *ical, double *ito,
-                                        double *ikr, double *iks, double *ik1, double *tension, double *tcurr, double *dt,
+                                        double *ikr, double *iks, double *ik1, double *tension, double *tcurr, double *dt,  double *dt_mech, double *tcurr_mech,
                                         unsigned short sample_id, unsigned int sample_size, cipa_t *temp_result,
                                         cipa_t *cipa_result, param_t *p_param) {
     unsigned long long input_counter = 0;
@@ -76,6 +76,12 @@ __device__ void kernel_DoDrugSim_single(double *d_ic50, double *d_cvar, double d
     double dt_set;
 
     float dtw = p_param->dtw;
+    // dt profiling variables
+    double min_dt = 0.002;
+    double max_dt = 0.1; 
+    // double dt_mech;
+    // double tcurr_mech;
+    int mech_jump;
 
     int cipa_datapoint = 0;
 
@@ -144,6 +150,7 @@ __device__ void kernel_DoDrugSim_single(double *d_ic50, double *d_cvar, double d
 
     // printf("Core %d:\n",sample_id);
     initConsts(d_CONSTANTS, d_STATES, type, conc, d_ic50, d_cvar, dutta, p_param->is_cvar, bcl, sample_id);
+    applyDrugEffect(d_CONSTANTS, conc, d_ic50, epsilon, sample_id);
     land_initConsts(false, false, y, d_mec_CONSTANTS, d_mec_RATES, d_mec_STATES, d_mec_ALGEBRAIC, sample_id);
 
     // starting from initial value, to make things simpler for now, we're just going to replace what initConst has done 
@@ -167,7 +174,6 @@ __device__ void kernel_DoDrugSim_single(double *d_ic50, double *d_cvar, double d
 
 
     // printf("%d: %lf, %d\n", sample_id,d_STATES[V + (sample_id * num_of_states)], cnt);
-    applyDrugEffect(d_CONSTANTS, conc, d_ic50, epsilon, sample_id);
 
     d_CONSTANTS[BCL + (sample_id * num_of_constants)] = bcl;
 
@@ -181,10 +187,8 @@ __device__ void kernel_DoDrugSim_single(double *d_ic50, double *d_cvar, double d
     // printf("%lf,%lf,%lf,%lf,%lf\n", d_ic50[0 + (14*sample_id)], d_ic50[1+ (14*sample_id)], d_ic50[2+ (14*sample_id)], d_ic50[3+ (14*sample_id)], d_ic50[4+ (14*sample_id)]);
     while (tcurr[sample_id]<tmax)
     {
-        computeRates(tcurr[sample_id], d_CONSTANTS, d_RATES, d_STATES, d_ALGEBRAIC, sample_id,
-                         d_mec_RATES[TRPN + (sample_id * 7)]);
-        land_computeRates(tcurr[sample_id], d_mec_CONSTANTS, d_mec_RATES, d_mec_STATES, d_mec_ALGEBRAIC, y,
-                              sample_id);
+        land_computeRates(tcurr[sample_id], d_mec_CONSTANTS, d_mec_RATES, d_mec_STATES, d_mec_ALGEBRAIC, y, sample_id);
+        computeRates(tcurr[sample_id], d_CONSTANTS, d_RATES, d_STATES, d_ALGEBRAIC, sample_id, d_mec_RATES[TRPN + (sample_id * 7)]);
         
         // dt_set = set_time_step( tcurr[sample_id], time_point, max_time_step, 
         // d_CONSTANTS, 
@@ -192,7 +196,10 @@ __device__ void kernel_DoDrugSim_single(double *d_ic50, double *d_cvar, double d
         // d_STATES, 
         // d_ALGEBRAIC, 
         // sample_id); 
-        dt_set = 0.001;
+
+        // dt_set = 0.001;
+        dt_set = set_time_step(tcurr[sample_id], time_point, max_time_step, d_CONSTANTS, d_RATES, d_STATES, d_ALGEBRAIC, sample_id);
+        
         if(d_STATES[(sample_id * num_of_states)+V] > inet_vm_threshold){
           inet += (d_ALGEBRAIC[(sample_id * num_of_algebraic) +INaL]+d_ALGEBRAIC[(sample_id * num_of_algebraic) +ICaL]+d_ALGEBRAIC[(sample_id * num_of_algebraic) +Ito]+d_ALGEBRAIC[(sample_id * num_of_algebraic) +IKr]+d_ALGEBRAIC[(sample_id * num_of_algebraic) +IKs]+d_ALGEBRAIC[(sample_id * num_of_algebraic) +IK1])*dt[sample_id];
           inal_auc += d_ALGEBRAIC[(sample_id * num_of_algebraic) +INaL]*dt[sample_id];
@@ -298,8 +305,32 @@ __device__ void kernel_DoDrugSim_single(double *d_ic50, double *d_cvar, double d
           // writen = false;
         }
         solveAnalytical(d_CONSTANTS, d_STATES, d_ALGEBRAIC, d_RATES,  dt[sample_id], sample_id);
-        land_solveEuler(dt[sample_id], tcurr[sample_id], d_STATES[cai + (sample_id * num_of_states)] * 1000.,
-                            d_mec_CONSTANTS, d_mec_RATES, d_mec_STATES, sample_id);
+        
+        // Solve Land2016 with dt profiling
+        if (dt[sample_id] >= min_dt){
+          dt_mech[sample_id] = min_dt;
+        } else {
+          dt_mech[sample_id] = dt[sample_id];
+        }
+        tcurr_mech[sample_id] = tcurr[sample_id];
+
+        if (dt[sample_id] > 0 && dt_mech[sample_id] > 0){
+        // mech_jump = plafon(dt[sample_id]/dt_mech[sample_id]); 
+        mech_jump = static_cast<int>(std::ceil(dt[sample_id]/dt_mech[sample_id]));
+        for (int i_jump = 0; i_jump < mech_jump; i_jump++){
+          if (tcurr_mech[sample_id] + dt_mech[sample_id] >= tcurr[sample_id] + dt[sample_id]){
+            dt_mech[sample_id] = tcurr[sample_id] + dt[sample_id] - tcurr_mech[sample_id];
+          }
+          // For next i_jump
+          land_solveEuler(dt_mech[sample_id], tcurr_mech[sample_id], d_STATES[cai + (sample_id * num_of_states)] * 1000., d_mec_CONSTANTS, d_mec_RATES, d_mec_STATES, sample_id);
+          tcurr_mech[sample_id] = tcurr_mech[sample_id] + dt_mech[sample_id];
+          computeRates(tcurr_mech[sample_id], d_CONSTANTS, d_RATES, d_STATES, d_ALGEBRAIC, sample_id, d_mec_RATES[TRPN + (sample_id * 7)]);
+        }
+      }  
+        // dt profiling ends, old version: 
+        // land_solveEuler(dt[sample_id], tcurr[sample_id], d_STATES[cai + (sample_id * num_of_states)] * 1000., d_mec_CONSTANTS, d_mec_RATES, d_mec_STATES, sample_id);
+        
+        
         if( temp_result[sample_id].dvmdt_max < d_RATES[(sample_id * num_of_states)+V] )temp_result[sample_id].dvmdt_max = d_RATES[(sample_id * num_of_states)+V];
           
           // this part should be
@@ -494,6 +525,20 @@ __device__ void kernel_DoDrugSim_single(double *d_ic50, double *d_cvar, double d
       cipa_result[sample_id].cad50 = temp_result[sample_id].cad50;
 }
 
+__device__ int plafon(double num) {
+    int intPart = (int)num;
+    // If the number is already an integer, return it
+    if (num == (double)intPart) {
+        return intPart;
+    }
+    // If the number is positive, return the integer part + 1
+    if (num > 0) {
+        return intPart + 1;
+    }
+    // If the number is negative, return the integer part
+    return intPart;
+}
+
 __global__ void kernel_DrugSimulation(double *d_ic50, double *d_cvar, double *d_conc, double *d_CONSTANTS,
                                       double *d_STATES, double *d_STATES_cache, double *d_RATES, double *d_ALGEBRAIC,
                                       double *d_mec_CONSTANTS, double *d_mec_STATES, double *d_mec_RATES,
@@ -502,14 +547,18 @@ __global__ void kernel_DrugSimulation(double *d_ic50, double *d_cvar, double *d_
                                       double *inal, double *ical, double *ito, double *ikr, double *iks, double *ik1, double *tension,
                                       unsigned int sample_size, cipa_t *temp_result, cipa_t *cipa_result,
                                       param_t *p_param) {
-    unsigned short thread_id;
-    thread_id = blockIdx.x * blockDim.x + threadIdx.x;
+
+    unsigned short thread_id = blockIdx.x * blockDim.x + threadIdx.x;
     if (thread_id >= sample_size) return;
+
     double time_for_each_sample[10000];
     double dt_for_each_sample[10000];
+    double mech_time_for_each_sample[10000];
+    double mech_dt_for_each_sample[10000];
 
     kernel_DoDrugSim_single(d_ic50, d_cvar, d_conc[thread_id], d_CONSTANTS, d_STATES, d_STATES_cache, d_RATES,
                             d_ALGEBRAIC, d_mec_CONSTANTS, d_mec_STATES, d_mec_RATES, d_mec_ALGEBRAIC, time, states,
                             out_dt, cai_result, ina, inal, ical, ito, ikr, iks, ik1, tension, time_for_each_sample,
-                            dt_for_each_sample, thread_id, sample_size, temp_result, cipa_result, p_param);
+                            dt_for_each_sample, mech_dt_for_each_sample, mech_time_for_each_sample, thread_id, 
+                            sample_size, temp_result, cipa_result, p_param);
 }
