@@ -1,0 +1,254 @@
+Clean.
+rm -rf *.o bin/drug_sim
+rm -rf **/*.o
+nvcc -x cu  -I/usr/local/cuda/include -dc -arch=sm_86 -o cellmodels/Land_2016.o cellmodels/Land_2016.cpp
+nvcc -x cu  -I/usr/local/cuda/include -dc -arch=sm_86 -o cellmodels/Ohara_Rudy_2011.o cellmodels/Ohara_Rudy_2011.cpp
+nvcc -x cu  -I/usr/local/cuda/include -dc -arch=sm_86 -o modules/glob_funct.o modules/glob_funct.cpp
+nvcc -x cu  -I/usr/local/cuda/include -dc -arch=sm_86 -o modules/glob_type.o modules/glob_type.cpp
+nvcc -x cu  -I/usr/local/cuda/include -dc -arch=sm_86 -o modules/param.o modules/param.cpp
+nvcc -o bin/drug_sim cellmodels/Land_2016.o cellmodels/Ohara_Rudy_2011.o modules/glob_funct.o modules/glob_type.o modules/param.o modules/cipa_t.cu modules/gpu.cu modules/gpu_glob_type.cu main.cu -g -L/usr/local/cuda/lib64 -arch=sm_86 -rdc=true
+modules/cipa_t.cuh(12): warning #1866-D: attribute does not apply to any entity
+  __attribute__((global)) struct cipa_t{
+                 ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+modules/cipa_t.cuh(12): warning #1866-D: attribute does not apply to any entity
+  __attribute__((global)) struct cipa_t{
+                 ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+modules/cipa_t.cuh(12): warning #1866-D: attribute does not apply to any entity
+  __attribute__((global)) struct cipa_t{
+                 ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+modules/cipa_t.cuh(12): warning #1866-D: attribute does not apply to any entity
+  __attribute__((global)) struct cipa_t{
+                 ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+modules/gpu.cu(69): warning #550-D: variable "is_peak" was set but never used
+      bool is_peak = false;
+           ^
+
+modules/gpu.cu(78): warning #177-D: variable "dtw" was declared but never referenced
+      float dtw = p_param->dtw;
+            ^
+
+modules/gpu.cu(81): warning #177-D: variable "max_dt" was declared but never referenced
+      double max_dt = 0.1;
+             ^
+
+modules/gpu.cu(127): warning #550-D: variable "t_peak_capture" was set but never used
+      double t_peak_capture = 0.0;
+             ^
+
+modules/gpu.cu(128): warning #177-D: variable "pace_steepest" was declared but never referenced
+      unsigned short pace_steepest = 0;
+                     ^
+
+modules/gpu.cu(134): warning #177-D: variable "qinward" was declared but never referenced
+       double inet,qinward;
+                   ^
+
+modules/cipa_t.cuh(12): warning #1866-D: attribute does not apply to any entity
+  __attribute__((global)) struct cipa_t{
+                 ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+main.cu(312): warning #192-D: unrecognized character escape sequence
+      std::regex pattern("/([a-zA-Z0-9_\.]+)\.csv");
+                                       ^
+
+main.cu(312): warning #192-D: unrecognized character escape sequence
+      std::regex pattern("/([a-zA-Z0-9_\.]+)\.csv");
+                                            ^
+
+main.cu(484): warning #549-D: variable "d_STATES_RESULT" is used before its value is set
+                                                   d_STATES_RESULT, d_all_states,
+                                                   ^
+
+main.cu(484): warning #549-D: variable "d_all_states" is used before its value is set
+                                                   d_STATES_RESULT, d_all_states,
+                                                                    ^
+
+modules/cipa_t.cuh(12): warning #1866-D: attribute does not apply to any entity
+  __attribute__((global)) struct cipa_t{
+                 ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+main.cu(312): warning #192-D: unrecognized character escape sequence
+      std::regex pattern("/([a-zA-Z0-9_\.]+)\.csv");
+                                       ^
+
+main.cu(312): warning #192-D: unrecognized character escape sequence
+      std::regex pattern("/([a-zA-Z0-9_\.]+)\.csv");
+                                            ^
+
+main.cu(484): warning #549-D: variable "d_STATES_RESULT" is used before its value is set
+                                                   d_STATES_RESULT, d_all_states,
+                                                   ^
+
+main.cu(484): warning #549-D: variable "d_all_states" is used before its value is set
+                                                   d_STATES_RESULT, d_all_states,
+                                                                    ^
+
+main.cu(581): warning #177-D: variable "conc_str" was declared but never referenced
+              char conc_str[((8 * sizeof(int) - 1) / 3 + 3)];
+                   ^
+
+main.cu(372): warning #177-D: variable "CALCIUM_SCALING" was declared but never referenced
+          static const int CALCIUM_SCALING = 1000000;
+                           ^
+
+main.cu(373): warning #177-D: variable "CURRENT_SCALING" was declared but never referenced
+          static const int CURRENT_SCALING = 1000;
+                           ^
+
+main.cu(329): warning #177-D: variable "num_of_constants" was declared but never referenced
+      int num_of_constants = 146;
+          ^
+
+main.cu(331): warning #177-D: variable "num_of_algebraic" was declared but never referenced
+      int num_of_algebraic = 199;
+          ^
+
+main.cu(332): warning #177-D: variable "num_of_rates" was declared but never referenced
+      int num_of_rates = 42;
+          ^
+
+Simulation mode -- sample-based
+Hill File -- ./IC50_control.csv
+Celltype -- 0
+Is_Dutta -- true
+Is_Cvar -- false
+Is_Print_Graph -- true
+Is_Using_Output -- false
+Basic_Cycle_Length -- 1000.000000
+GPU_Index -- 0
+Number_of_Pacing -- 1000
+Pace_Find_Steepest -- 250
+Time_Step -- 0.005000
+Drug_Name -- bepridil
+Concentrations -- 33.000000
+
+
+dtw -- 10.000000
+
+
+IC50_control
+Using cached initial state from previous result!!!! 
+
+quinidine
+0
+quinidine_0
+47970
+0.6301
+NA
+NA
+NA
+NA
+15950
+1.135
+8589
+1.527
+NA
+NA
+363.8
+1.109
+
+Sample size: 1
+Set GPU Number: 0
+preparing GPU memory space 
+Found cache for 1 samples
+Copying sample files to GPU memory space 
+Timer started, doing simulation.... 
+
+
+GPU Usage at this moment: 
+GPU No 0
+Free Memory: 16435380224, Total Memory: 16851599360 (97.530091 percent free)
+Sample size: 1
+
+   Configuration: 
+
+	block	||	thread
+---------------------------------------
+  	1	||	32
+
+
+0.000000
+1.000000
+2.000000
+3.000000
+4.000000
+5.000000
+6.000000
+7.000000
+8.000000
+9.000000
+10.000000
+11.000000
+12.000000
+13.000000
+14.000000
+15.000000
+16.000000
+17.000000
+18.000000
+19.000000
+20.000000
+21.000000
+22.000000
+23.000000
+24.000000
+25.000000
+1000.000000
+1001.000000
+1002.000000
+1003.000000
+1004.000000
+1005.000000
+1006.000000
+1007.000000
+1008.000000
+1009.000000
+1010.000000
+1011.000000
+1012.000000
+1013.000000
+1014.000000
+1015.000000
+1016.000000
+1017.000000
+1018.000000
+1019.000000
+1020.000000
+1021.000000
+1022.000000
+1023.000000
+1024.000000
+1025.000000
+allocating memory for computation result in the CPU, malloc style 
+...allocated for STATES, 
+...allocated for time, 
+...allocated for dt, 
+...allocated for Cai, 
+...allocated for iNa, 
+...allocated for ito, 
+...allocated for ikr, 
+...allocated for iks, 
+...allocated for ik1, 
+...allocated for ICaL, 
+...allocating for INaL and postprocessing, all set!
+copying the data back to the CPU 
+writing to file... 
+Directory created
+writing each biomarkers value... 
+Elapsed time: 97.3979s
