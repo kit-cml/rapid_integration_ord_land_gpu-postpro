@@ -75,6 +75,8 @@ __device__ void kernel_DoDrugSim_single(double *d_ic50, double *d_cvar, double d
     double max_time_step = 1.0, time_point = 25.0;
     double dt_set;
 
+    float dtw = p_param->dtw;
+
     int cipa_datapoint = 0;
 
     // bool writen = false;

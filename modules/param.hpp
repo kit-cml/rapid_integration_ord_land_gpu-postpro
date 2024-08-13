@@ -25,6 +25,7 @@ struct param_t
   char drug_name[100];
   char concs[100];
   float conc;
+  float dtw;
   void init();
   void show_val();
 };

@@ -26,6 +26,7 @@ void param_t::init()
   celltype = 0.;
   dt = 0.005;
   // dt = 0.1;
+  dtw = 10.0;
 
   conc = 33.0;
   
@@ -55,4 +56,5 @@ void param_t::show_val()
   mpi_printf( 0, "%s -- %lf\n", "Time_Step", dt);
   mpi_printf( 0, "%s -- %s\n", "Drug_Name", drug_name);
   mpi_printf( 0, "%s -- %lf\n\n\n", "Concentrations", conc);
+  mpi_printf(0, "%s -- %lf\n\n\n", "dtw", dtw);
 }
