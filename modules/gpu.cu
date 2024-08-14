@@ -197,8 +197,8 @@ __device__ void kernel_DoDrugSim_single(double *d_ic50, double *d_cvar, double d
         // d_ALGEBRAIC, 
         // sample_id); 
 
-        // dt_set = 0.001;
-        dt_set = set_time_step(tcurr[sample_id], time_point, max_time_step, d_CONSTANTS, d_RATES, d_STATES, d_ALGEBRAIC, sample_id);
+        dt_set = 0.001;
+        // dt_set = set_time_step(tcurr[sample_id], time_point, max_time_step, d_CONSTANTS, d_RATES, d_STATES, d_ALGEBRAIC, sample_id);
         
         if(d_STATES[(sample_id * num_of_states)+V] > inet_vm_threshold){
           inet += (d_ALGEBRAIC[(sample_id * num_of_algebraic) +INaL]+d_ALGEBRAIC[(sample_id * num_of_algebraic) +ICaL]+d_ALGEBRAIC[(sample_id * num_of_algebraic) +Ito]+d_ALGEBRAIC[(sample_id * num_of_algebraic) +IKr]+d_ALGEBRAIC[(sample_id * num_of_algebraic) +IKs]+d_ALGEBRAIC[(sample_id * num_of_algebraic) +IK1])*dt[sample_id];
